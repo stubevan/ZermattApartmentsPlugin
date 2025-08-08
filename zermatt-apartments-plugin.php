@@ -59,14 +59,14 @@ const ZA_ERROR_MESSAGES = array(
 
 add_filter('wpbs_form_validation_1', 'za_validate_5', 10, 2);
 add_filter('wpbs_form_validation_6', 'za_validate_5', 10, 2);
-add_filter('wpbs_form_validation_5', 'za_validate_3', 10, 2);
+add_filter('wpbs_form_validation_5', 'za_validate_2', 10, 2);
 
 function za_validate_5($result, $data) {
     return(za_booking_form_validate(5, $result, $data));
 }
 
-function za_validate_3($result, $data) {
-    return(za_booking_form_validate(3, $result, $data));
+function za_validate_2($result, $data) {
+    return(za_booking_form_validate(2, $result, $data));
 }
 
 /*
@@ -79,7 +79,7 @@ function za_validate_3($result, $data) {
  */
 function za_booking_form_validate($max_guests, $result, $data)
 {
-    wp_mail('stu@mees.st', 'var dump', print_r($data, true));
+    //wp_mail('stu@mees.st', 'var dump', print_r($data, true));
     $language = $data['language'];
     if ($language != 'en' && $language != 'fr' && $language != 'de') {
         $language = 'en';
