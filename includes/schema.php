@@ -48,7 +48,7 @@ function za_schema_apartments() {
 /** The JSON-LD array for an apartment page. */
 function za_schema_for_page( $page_id, $apartment ) {
 	$url         = get_permalink( $page_id );
-	$description = trim( (string) get_post_meta( $page_id, 'rank_math_description', true ) );
+	$description = trim( wp_strip_all_tags( (string) get_post_meta( $page_id, 'rank_math_description', true ) ) );
 
 	$amenities = array();
 	foreach ( $apartment['amenities'] as $amenity ) {
@@ -106,7 +106,7 @@ add_action(
 			return;
 		}
 		echo "\n" . '<script type="application/ld+json" class="za-schema">'
-			. wp_json_encode( za_schema_for_page( $page_id, $apartments[ $page_id ] ), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE )
+			. wp_json_encode( za_schema_for_page( $page_id, $apartments[ $page_id ] ), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP ) // HEX_TAG: no </script> breakout.
 			. '</script>' . "\n";
 	},
 	20
