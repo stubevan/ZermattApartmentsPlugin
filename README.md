@@ -25,6 +25,14 @@ It skips anything that already exists, so it won't overwrite edits made in wp-ad
 
 Two template systems are involved, so changing the wording means editing both: the `07a` notification on each form and the manual template.
 
+## Coupons: pay cleaning only
+
+`includes/coupons.php`: WP Booking System coupons discount either the nights only or the whole total. For the coupon
+IDs in `ZA_COUPONS_PAY_CLEANING_ONLY` the discount is changed to "everything except the cleaning
+fee", so the guest pays only cleaning (no nights, no tourist tax). The coupon itself must be a 100% percentage coupon
+set to apply to the whole total; with any other setting the rule does nothing. Coupons are listed by ID, never
+by code: this repo is public and the codes give free stays.
+
 ## WP-CLI commands
 
 Run on the server: `ssh zermattapartments "cd wordpress && wp --skip-plugins=wordfence <command>"`
