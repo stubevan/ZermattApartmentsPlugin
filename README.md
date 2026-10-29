@@ -7,6 +7,7 @@ WordPress plugin for https://zermattapartments.ch, which uses [WP Booking System
 - **Booking form checks:** the two email addresses must match, and guest numbers must not exceed the apartment's limit (`includes/booking-validation.php`; form and field IDs are hard-coded).
 - **Deposit Received email:** guests are emailed when the owner marks their deposit as paid (see below).
 - **Email backfill:** queues arrival, checkout and review emails that WPBS failed to schedule.
+- **Past guest picker:** on wp-admin Add Booking, copies a returning guest's details from their latest booking (see below).
 
 IDs (calendars, forms, emails) live in `includes/config.php`.
 
@@ -45,6 +46,19 @@ IDs in `ZA_COUPONS_PAY_CLEANING_ONLY` the discount is changed to "everything exc
 fee", so the guest pays only cleaning (no nights, no tourist tax). The coupon itself must be a 100% percentage coupon
 set to apply to the whole total; with any other setting the rule does nothing. Coupons are listed by ID, never
 by code: this repo is public and the codes give free stays.
+
+## Past guest picker (Add Booking)
+
+`includes/customer-prefill.php` and `assets/customer-prefill.js`. WPBS can't start a booking from an existing guest,
+so the admin Add Booking form (manual bookings only; the public form is untouched) gets a "Copy details from a
+past guest" box above the fields. Typing filters a list of past guests (latest booking per email, across the
+calendars in `ZA_PAST_GUEST_CALENDARS`, trashed bookings skipped). Choosing one copies the fields in
+`ZA_PREFILL_FIELDS` (names, both email boxes, address, phone, guest numbers, guest list) from that booking; special
+requests, discount code and payment method are not copied. Everything stays editable. The booking forms share field
+IDs, so a guest from one apartment fills the other's form.
+
+The list and the AJAX lookup (`za_past_guest_details`) are only available to logged-in users who can access the
+form's calendar (`wpbs_current_user_can_access_calendar()`), with a nonce. The repo holds no guest data.
 
 ## WP-CLI commands
 
