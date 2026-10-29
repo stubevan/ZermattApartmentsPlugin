@@ -122,21 +122,32 @@ function za_deposit_email_install( $dry_run = true, $enable = false ) {
 		$lines[] = sprintf( '%s (form %d): created email %d from %d (%s).', $apt['name'], $apt['form'], $id, $source->get( 'id' ), $enable ? 'enabled' : 'disabled' );
 	}
 
-	// Manual templates: Settings → Email → Email Templates (used by "Load Template" on a booking).
+	return array_merge( $lines, za_add_manual_templates( $text, $dry_run ) );
+}
+
+/**
+ * Append manual templates (Settings → Email → Email Templates, used by "Load Template" on a booking).
+ * Skips any whose subject already exists, so it never overwrites Nicki's edits.
+ *
+ * @param array $items lang => array( 'subject' => …, 'message' => … )
+ * @return string[] lines describing what was (or would be) done
+ */
+function za_add_manual_templates( $items, $dry_run = true ) {
 	$settings = get_option( 'wpbs_settings', array() );
 	$names    = isset( $settings['form_email_template_name'] ) ? (array) $settings['form_email_template_name'] : array();
 	$bodies   = isset( $settings['form_email_template_body'] ) ? (array) $settings['form_email_template_body'] : array();
+	$lines    = array();
 	$added    = 0;
 
-	foreach ( array( 'en', 'fr', 'de' ) as $lang ) {
-		$subject = $text[ $lang ]['subject'];
+	foreach ( $items as $lang => $item ) {
+		$subject = $item['subject'];
 		$index   = array_search( $subject, $names, true );
 		if ( false !== $index ) {
 			$lines[] = sprintf( 'Manual template #%d (%s) already exists, skipped.', $index + 1, strtoupper( $lang ) );
 			continue;
 		}
 		$names[]  = $subject;
-		$bodies[] = wpautop( $text[ $lang ]['message'] );
+		$bodies[] = wpautop( $item['message'] );
 		$lines[]  = sprintf( '%s manual template #%d (%s): "%s".', $dry_run ? 'Would add' : 'Added', count( $names ), strtoupper( $lang ), $subject );
 		$added++;
 	}
