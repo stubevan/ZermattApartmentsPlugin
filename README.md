@@ -27,10 +27,11 @@ Two template systems are involved, so changing the wording means editing both: t
 
 ## Coupons: pay cleaning only
 
-`includes/coupons.php`: WP Booking System coupons discount either the nights only or the whole total. For the codes
-in `ZA_COUPONS_PAY_CLEANING_ONLY` (currently SZABADOSFAM) the discount is changed to "everything except the cleaning
+`includes/coupons.php`: WP Booking System coupons discount either the nights only or the whole total. For the coupon
+IDs in `ZA_COUPONS_PAY_CLEANING_ONLY` the discount is changed to "everything except the cleaning
 fee", so the guest pays only cleaning (no nights, no tourist tax). The coupon itself must be a 100% percentage coupon
-set to apply to the whole total; with any other setting the rule does nothing.
+set to apply to the whole total; with any other setting the rule does nothing. Coupons are listed by ID, never
+by code: this repo is public and the codes give free stays.
 
 ## WP-CLI commands
 

@@ -11,8 +11,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-/** Codes where the guest pays only the cleaning fee. */
-const ZA_COUPONS_PAY_CLEANING_ONLY = array( 'SZABADOSFAM' );
+/**
+ * WPBS coupon IDs (Coupons list) where the guest pays only the cleaning fee.
+ * IDs, not codes: this repo is public and the codes give free stays.
+ */
+const ZA_COUPONS_PAY_CLEANING_ONLY = array( 14 );
 
 /** Total of the cleaning-fee line(s) in a WPBS price array (matched by label, so it survives small renames). */
 function za_cleaning_fee_total( $prices ) {
@@ -30,9 +33,8 @@ add_filter(
 	'wpbs_discounts_coupon_percentage_value',
 	function ( $value, $coupon, $prices ) {
 		$options = $coupon->get( 'options' );
-		$code    = strtoupper( (string) ( $options['code'] ?? '' ) );
 
-		if ( ! in_array( $code, ZA_COUPONS_PAY_CLEANING_ONLY, true ) || 'all' !== ( $options['apply_to'] ?? '' ) ) {
+		if ( ! in_array( (int) $coupon->get( 'id' ), ZA_COUPONS_PAY_CLEANING_ONLY, true ) || 'all' !== ( $options['apply_to'] ?? '' ) ) {
 			return $value;
 		}
 
