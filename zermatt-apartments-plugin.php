@@ -3,7 +3,7 @@
  * Plugin Name:  Zermatt Apartments Website Support
  * Plugin URI:   https://github.com/stubevan/ZermattApartmentsPlugin
  * Description:  Support functions for the Zermatt Apartments booking system: booking form checks, the Deposit Received email, email backfill tools, past guest picker on Add Booking.
- * Version:      1.3
+ * Version:      1.3.1
  * Requires PHP: 8.0
  * Author:       Stu Bevan
  * Author URI:   https://mees.st
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 define( 'ZA_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
-define( 'ZA_PLUGIN_VERSION', '1.3' );
+define( 'ZA_PLUGIN_VERSION', '1.3.1' );
 
 require_once ZA_PLUGIN_DIR . 'includes/config.php';
 require_once ZA_PLUGIN_DIR . 'includes/booking-validation.php';

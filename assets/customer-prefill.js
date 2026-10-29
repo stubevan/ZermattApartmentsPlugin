@@ -39,6 +39,10 @@
 	}
 
 	function lookup($box, email) {
+		if (typeof zaPrefill === 'undefined') {
+			status($box, 'The picker is not working on this page. Please type the details.', true);
+			return;
+		}
 		status($box, 'Loading…', false);
 		$.post(zaPrefill.ajaxUrl, {
 			action: 'za_past_guest_details',
