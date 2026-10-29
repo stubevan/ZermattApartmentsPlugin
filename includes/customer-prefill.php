@@ -83,10 +83,25 @@ function za_calendar_for_form( $form_id ) {
 	return 0;
 }
 
+/** The WPBS functions the picker uses. If an upgrade removes any of them, the picker is hidden. */
+function za_prefill_wpbs_ok() {
+	foreach ( array( 'wpbs_get_bookings', 'wpbs_get_booking', 'wpbs_current_user_can_access_calendar' ) as $fn ) {
+		if ( ! function_exists( $fn ) ) {
+			return false;
+		}
+	}
+	return true;
+}
+
+/** Log a picker failure to the PHP error log; the booking form carries on without the picker. */
+function za_prefill_log( $e ) {
+	error_log( 'Zermatt past guest picker disabled: ' . $e->getMessage() . ' (' . basename( $e->getFile() ) . ':' . $e->getLine() . ')' );
+}
+
 /** Can the current user see past guests for this form? */
 function za_can_prefill( $form_id ) {
 	$calendar_id = za_calendar_for_form( $form_id );
-	return $calendar_id && is_user_logged_in() && function_exists( 'wpbs_current_user_can_access_calendar' )
+	return $calendar_id && is_user_logged_in() && za_prefill_wpbs_ok()
 		&& wpbs_current_user_can_access_calendar( $calendar_id );
 }
 
@@ -94,34 +109,46 @@ function za_can_prefill( $form_id ) {
 add_filter(
 	'wpbs_form_outputter_form_fields_before',
 	function ( $html, $form, $args ) {
-		$form_id = (int) $form->get( 'id' );
-		if ( empty( $args['manual_booking'] ) || ! za_can_prefill( $form_id ) ) {
+		// Anything unexpected from WPBS (e.g. after an upgrade) just leaves the picker out.
+		try {
+			return $html . za_past_guest_picker_html( $form, (array) $args );
+		} catch ( \Throwable $e ) {
+			za_prefill_log( $e );
 			return $html;
 		}
-
-		$list_id = 'za-past-guests-' . $form_id;
-		$options = '';
-		foreach ( za_past_guests() as $guest ) {
-			$name  = trim( $guest['surname'] . ' ' . $guest['first'] );
-			$when  = $guest['start'] ? date_i18n( 'M Y', strtotime( $guest['start'] ) ) : '';
-			$label = $name . ' – ' . $guest['email'] . ' – ' . $guest['apartment'] . ( $when ? ', ' . $when : '' );
-			$options .= '<option value="' . esc_attr( $label ) . '" data-email="' . esc_attr( $guest['email'] ) . '"></option>';
-		}
-
-		// No name attributes, so nothing here is posted with the booking.
-		$html .= '<div class="za-past-guest" data-form="' . $form_id . '" data-nonce="' . esc_attr( wp_create_nonce( ZA_PREFILL_NONCE ) ) . '"'
-			. ' style="margin:0 0 20px;padding:12px;background:#f6f7f7;border:1px solid #dcdcde;border-radius:4px">'
-			. '<label for="' . esc_attr( $list_id ) . '-input" style="display:block;font-weight:600;margin-bottom:6px">Copy details from a past guest</label>'
-			. '<input type="text" id="' . esc_attr( $list_id ) . '-input" class="za-past-guest-input" list="' . esc_attr( $list_id ) . '" autocomplete="off"'
-			. ' placeholder="Start typing a surname or email" style="width:100%;max-width:520px">'
-			. '<datalist id="' . esc_attr( $list_id ) . '">' . $options . '</datalist>'
-			. '<div class="za-past-guest-status" style="margin-top:6px;font-size:12px;color:#50575e">Copies name, email, address, phone, guest numbers and the guest list from their latest booking. Check them before saving.</div>'
-			. '</div>';
-		return $html;
 	},
 	10,
 	3
 );
+
+/** The picker's HTML for this form, or '' when it doesn't apply. */
+function za_past_guest_picker_html( $form, $args ) {
+	$html    = '';
+	$form_id = is_object( $form ) ? (int) $form->get( 'id' ) : 0;
+	if ( empty( $args['manual_booking'] ) || ! za_can_prefill( $form_id ) ) {
+		return $html;
+	}
+
+	$list_id = 'za-past-guests-' . $form_id;
+	$options = '';
+	foreach ( za_past_guests() as $guest ) {
+		$name  = trim( $guest['surname'] . ' ' . $guest['first'] );
+		$when  = $guest['start'] ? date_i18n( 'M Y', strtotime( $guest['start'] ) ) : '';
+		$label = $name . ' – ' . $guest['email'] . ' – ' . $guest['apartment'] . ( $when ? ', ' . $when : '' );
+		$options .= '<option value="' . esc_attr( $label ) . '" data-email="' . esc_attr( $guest['email'] ) . '"></option>';
+	}
+
+	// No name attributes, so nothing here is posted with the booking.
+	$html .= '<div class="za-past-guest" data-form="' . $form_id . '" data-nonce="' . esc_attr( wp_create_nonce( ZA_PREFILL_NONCE ) ) . '"'
+		. ' style="margin:0 0 20px;padding:12px;background:#f6f7f7;border:1px solid #dcdcde;border-radius:4px">'
+		. '<label for="' . esc_attr( $list_id ) . '-input" style="display:block;font-weight:600;margin-bottom:6px">Copy details from a past guest</label>'
+		. '<input type="text" id="' . esc_attr( $list_id ) . '-input" class="za-past-guest-input" list="' . esc_attr( $list_id ) . '" autocomplete="off"'
+		. ' placeholder="Start typing a surname or email" style="width:100%;max-width:520px">'
+		. '<datalist id="' . esc_attr( $list_id ) . '">' . $options . '</datalist>'
+		. '<div class="za-past-guest-status" style="margin-top:6px;font-size:12px;color:#50575e">Copies name, email, address, phone, guest numbers and the guest list from their latest booking. Check them before saving.</div>'
+		. '</div>';
+	return $html;
+}
 
 // AJAX: the copyable fields from a past guest's latest booking.
 add_action(
@@ -132,23 +159,32 @@ add_action(
 			wp_send_json_error( array( 'message' => 'Not allowed.' ), 403 );
 		}
 
-		$email  = strtolower( sanitize_email( wp_unslash( $_POST['email'] ?? '' ) ) );
-		$guests = za_past_guests();
-		if ( ! isset( $guests[ $email ] ) ) {
-			wp_send_json_error( array( 'message' => 'No past booking found for that guest.' ), 404 );
+		$email = strtolower( sanitize_email( wp_unslash( $_POST['email'] ?? '' ) ) );
+		try {
+			$guests  = za_past_guests();
+			$guest   = $guests[ $email ] ?? null;
+			$booking = $guest ? wpbs_get_booking( $guest['booking_id'] ) : null;
+			$allowed = $booking && wpbs_current_user_can_access_calendar( (int) $booking->get( 'calendar_id' ) );
+			$fields  = array();
+			if ( $allowed ) {
+				foreach ( ZA_PREFILL_FIELDS as $field_id ) {
+					$fields[ $field_id ] = za_booking_field_value( $booking, $field_id );
+				}
+			}
+		} catch ( \Throwable $e ) {
+			za_prefill_log( $e );
+			wp_send_json_error( array( 'message' => 'The picker is not working (WP Booking System may have changed). Please type the details.' ), 500 );
 		}
 
-		$booking = wpbs_get_booking( $guests[ $email ]['booking_id'] );
-		if ( ! $booking || ! wpbs_current_user_can_access_calendar( (int) $booking->get( 'calendar_id' ) ) ) {
-			wp_send_json_error( array( 'message' => 'Not allowed.' ), 403 );
+		if ( ! $guest ) {
+			wp_send_json_error( array( 'message' => 'No past booking found for that guest.' ), 404 );
 		}
-		$fields  = array();
-		foreach ( ZA_PREFILL_FIELDS as $field_id ) {
-			$fields[ $field_id ] = za_booking_field_value( $booking, $field_id );
+		if ( ! $allowed ) {
+			wp_send_json_error( array( 'message' => 'Not allowed.' ), 403 );
 		}
 		wp_send_json_success(
 			array(
-				'booking_id' => $guests[ $email ]['booking_id'],
+				'booking_id' => $guest['booking_id'],
 				'fields'     => $fields,
 			)
 		);
