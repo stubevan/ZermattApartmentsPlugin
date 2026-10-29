@@ -34,6 +34,10 @@ function za_booking_field_value( $booking, $field_id ) {
 function za_past_guests() {
 	$guests = array();
 	foreach ( ZA_PAST_GUEST_CALENDARS as $calendar_id => $apartment ) {
+		// Only guests from calendars this user may see (admins see all, including the trashed Studio).
+		if ( ! wpbs_current_user_can_access_calendar( $calendar_id ) ) {
+			continue;
+		}
 		$bookings = wpbs_get_bookings(
 			array(
 				'calendar_id' => $calendar_id,
@@ -135,6 +139,9 @@ add_action(
 		}
 
 		$booking = wpbs_get_booking( $guests[ $email ]['booking_id'] );
+		if ( ! $booking || ! wpbs_current_user_can_access_calendar( (int) $booking->get( 'calendar_id' ) ) ) {
+			wp_send_json_error( array( 'message' => 'Not allowed.' ), 403 );
+		}
 		$fields  = array();
 		foreach ( ZA_PREFILL_FIELDS as $field_id ) {
 			$fields[ $field_id ] = za_booking_field_value( $booking, $field_id );
