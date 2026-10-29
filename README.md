@@ -25,6 +25,19 @@ It skips anything that already exists, so it won't overwrite edits made in wp-ad
 
 Two template systems are involved, so changing the wording means editing both: the `07a` notification on each form and the manual template.
 
+## Payment received email (once per booking)
+
+`includes/paid-email.php`. WP Booking System sends each apartment's "07 - Final Payment Received" email (IDs =
+`final_payment_email` in `includes/config.php`) when a bank-transfer booking is marked paid. This adds:
+- **Once only.** The first successful send sets booking meta `za_paid_email_sent`. After that, the email's "send to"
+  reads as empty for that booking, so WPBS skips it without sending or logging. (Unmarking and re-marking a final
+  payment used to send it again.)
+- **Payment on arrival.** Marking those bookings paid now sends the same email; WPBS on its own sends nothing.
+
+`wp zermatt paid-email status [--booking=ID]`, `mark-history [--yes]` (flags bookings whose email log already has a
+"07 -" email; dry run without `--yes`), `reset-flag --booking=ID`, `templates [--dry-run]` (copies the email's
+EN/FR/DE text into the manual "Load Template" list).
+
 ## Coupons: pay cleaning only
 
 `includes/coupons.php`: WP Booking System coupons discount either the nights only or the whole total. For the coupon
