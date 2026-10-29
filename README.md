@@ -60,6 +60,13 @@ IDs, so a guest from one apartment fills the other's form.
 The list and the AJAX lookup (`za_past_guest_details`) are only available to logged-in users who can access the
 form's calendar (`wpbs_current_user_can_access_calendar()`), with a nonce. The repo holds no guest data.
 
+## Structured data (SEO)
+
+`includes/schema.php` adds a hand-written `VacationRental` JSON-LD block (address, bedrooms, bathrooms, guests,
+amenities, photos) to each apartment page in EN/DE/FR. Its description is the page's Rank Math meta description.
+Rank Math provides the site-wide `LodgingBusiness` markup; its default page "Article" schema is switched off.
+Edit the facts in `za_schema_apartments()` if an apartment changes.
+
 ## WP-CLI commands
 
 Run on the server: `ssh zermattapartments "cd wordpress && wp --skip-plugins=wordfence <command>"`
