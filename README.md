@@ -67,6 +67,11 @@ amenities, photos) to each apartment page in EN/DE/FR. Its description is the pa
 Rank Math provides the site-wide `LodgingBusiness` markup; its default page "Article" schema is switched off.
 Edit the facts in `za_schema_apartments()` if an apartment changes.
 
+## Speed: booking assets only where needed
+
+`includes/performance.php` removes WP Booking System's front-end scripts and styles from pages without a calendar.
+The calendar/payment page IDs are in `ZA_WPBS_ASSET_PAGES`; the same IDs are excluded from the IONOS page cache.
+
 ## WP-CLI commands
 
 Run on the server: `ssh zermattapartments "cd wordpress && wp --skip-plugins=wordfence <command>"`
